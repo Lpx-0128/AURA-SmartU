@@ -52,7 +52,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       {universityLogo && (
         <div
-          className="absolute inset-0 opacity-15 pointer-events-none"
+          className="absolute inset-0 opacity-20 pointer-events-none"
           style={{
             backgroundImage: `url(${universityLogo})`,
             backgroundPosition: 'center',
