@@ -3,9 +3,9 @@ import { supabase } from '../lib/supabase';
 import { UserCircle2, School, ArrowUpDown, Car, ParkingSquare, BookOpen, Utensils, CalendarDays, Phone } from 'lucide-react';
 import { VoiceAssistant } from './VoiceAssistant';
 import { useState, useEffect } from 'react';
-import taylorsLogo from '../assets/unnamed.png';
-import monashLogo from '../assets/monash-logo-v2.png';
-import sunwayLogo from '../assets/sunway-logo.jpg';
+import taylorsLogo from '../assets/unnamed copy copy.png';
+import monashLogo from '../assets/monash-logo-v2 copy copy.png';
+import sunwayLogo from '../assets/sunway-logo copy.jpg';
 
 const universityLogos: Record<string, string> = {
   'TAYLOR': taylorsLogo,
@@ -52,7 +52,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
       {universityLogo && (
         <div
-          className="absolute inset-0 opacity-5 pointer-events-none"
+          className="absolute inset-0 opacity-15 pointer-events-none"
           style={{
             backgroundImage: `url(${universityLogo})`,
             backgroundPosition: 'center',

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { GraduationCap, Mail, Phone, Building2, User, Lock, AlertCircle, Key } from 'lucide-react';
-import taylorLogo from '../assets/unnamed.png';
-import sunwayLogo from '../assets/sunway-logo.jpg';
-import monashLogo from '../assets/monash-logo-v2.png';
+import taylorLogo from '../assets/unnamed copy copy.png';
+import sunwayLogo from '../assets/sunway-logo copy.jpg';
+import monashLogo from '../assets/monash-logo-v2 copy copy.png';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -169,7 +169,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 flex items-center justify-center opacity-10">
+      <div className="absolute inset-0 flex items-center justify-center opacity-20">
         <div className="grid grid-cols-3 gap-8 p-8">
           <img src={taylorLogo} alt="Taylor University" className="w-48 h-48 object-contain" />
           <img src={sunwayLogo} alt="Sunway University" className="w-48 h-48 object-contain" />
