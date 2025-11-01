@@ -6,12 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-interface TrafficRoute {
+interface POI {
   id: string;
-  from_location: string;
-  to_location: string;
-  destination_latitude: number;
-  destination_longitude: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+interface UserProfile {
   university_id: string;
 }
 
@@ -36,7 +38,10 @@ Deno.serve(async (req: Request) => {
 
     if (!googleMapsApiKey) {
       return new Response(
-        JSON.stringify({ error: 'Google Maps API key not configured', message: 'Please add GOOGLE_MAPS_API_KEY to Supabase Edge Function secrets' }),
+        JSON.stringify({
+          error: 'Google Maps API key not configured',
+          message: 'Please add GOOGLE_MAPS_API_KEY to Supabase Edge Function secrets in your Supabase Dashboard > Project Settings > Edge Functions > Secrets'
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -44,39 +49,80 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: routes, error: routesError } = await supabase
-      .from('traffic_routes')
-      .select('id, from_location, to_location, destination_latitude, destination_longitude, university_id');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization token' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
-    if (routesError) throw routesError;
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('university_id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    const { data: universities, error: uniError } = await supabase
+    if (!profile?.university_id) {
+      return new Response(
+        JSON.stringify({ error: 'User profile or university not found' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const { data: university } = await supabase
       .from('universities')
-      .select('id, latitude, longitude');
+      .select('id, latitude, longitude')
+      .eq('id', profile.university_id)
+      .maybeSingle();
 
-    if (uniError) throw uniError;
+    if (!university?.latitude || !university?.longitude) {
+      return new Response(
+        JSON.stringify({ error: 'University coordinates not found' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const { data: pois, error: poisError } = await supabase
+      .from('pois')
+      .select('id, name, latitude, longitude');
+
+    if (poisError) throw poisError;
 
     const updates = [];
     const errors = [];
 
-    for (const route of routes as TrafficRoute[]) {
-      const university = (universities as University[]).find(
-        (u) => u.id === route.university_id
-      );
-
-      if (!university?.latitude || !university?.longitude) {
-        errors.push({ route: route.to_location, error: 'University location not found' });
-        continue;
-      }
-      if (!route.destination_latitude || !route.destination_longitude) {
-        errors.push({ route: route.to_location, error: 'Destination coordinates missing' });
+    for (const poi of pois as POI[]) {
+      if (!poi.latitude || !poi.longitude) {
+        errors.push({ poi: poi.name, error: 'POI coordinates missing' });
         continue;
       }
 
       const origin = `${university.latitude},${university.longitude}`;
-      const destination = `${route.destination_latitude},${route.destination_longitude}`;
+      const destination = `${poi.latitude},${poi.longitude}`;
 
       try {
         const mapsUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(
@@ -89,62 +135,61 @@ Deno.serve(async (req: Request) => {
         const mapsData = await mapsResponse.json();
 
         if (mapsData.status !== 'OK') {
-          errors.push({ route: route.to_location, error: `Google Maps API error: ${mapsData.status}`, detail: mapsData.error_message });
+          errors.push({ poi: poi.name, error: `Google Maps API error: ${mapsData.status}`, detail: mapsData.error_message });
           continue;
         }
 
-        if (
-          mapsData.rows?.[0]?.elements?.[0]?.status === 'OK'
-        ) {
+        if (mapsData.rows?.[0]?.elements?.[0]?.status === 'OK') {
           const element = mapsData.rows[0].elements[0];
           const durationInTraffic = element.duration_in_traffic || element.duration;
           const normalDuration = element.duration;
           const minutes = Math.ceil(durationInTraffic.value / 60);
 
-          let status = 'Light';
+          let trafficLevel = 'low';
           if (element.duration_in_traffic) {
             const durationRatio = durationInTraffic.value / normalDuration.value;
             if (durationRatio >= 2.0) {
-              status = 'Severe';
+              trafficLevel = 'severe';
             } else if (durationRatio >= 1.4) {
-              status = 'Heavy';
+              trafficLevel = 'heavy';
             } else if (durationRatio >= 1.15) {
-              status = 'Moderate';
+              trafficLevel = 'moderate';
             }
           }
 
           updates.push({
-            route_id: route.id,
-            status,
-            estimated_time_minutes: minutes,
+            poi_id: poi.id,
+            commute_time_minutes: minutes,
+            traffic_level: trafficLevel,
+            last_updated: new Date().toISOString(),
           });
         } else {
-          errors.push({ route: route.to_location, error: `Route status: ${mapsData.rows?.[0]?.elements?.[0]?.status}` });
+          errors.push({ poi: poi.name, error: `Route status: ${mapsData.rows?.[0]?.elements?.[0]?.status}` });
         }
       } catch (error) {
-        errors.push({ route: route.to_location, error: error.message });
-        console.error(`Error fetching traffic for route ${route.to_location}:`, error);
+        errors.push({ poi: poi.name, error: error.message });
+        console.error(`Error fetching traffic for POI ${poi.name}:`, error);
       }
 
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     if (updates.length > 0) {
-      await supabase.from('traffic_status').delete().neq('route_id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('poi_traffic').delete().neq('poi_id', '00000000-0000-0000-0000-000000000000');
 
       const { error: insertError } = await supabase
-        .from('traffic_status')
+        .from('poi_traffic')
         .insert(updates);
 
       if (insertError) throw insertError;
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        updated: updates.length, 
-        total_routes: (routes as TrafficRoute[]).length,
-        errors: errors.length > 0 ? errors : undefined 
+      JSON.stringify({
+        success: true,
+        updated: updates.length,
+        total_pois: (pois as POI[]).length,
+        errors: errors.length > 0 ? errors : undefined
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
