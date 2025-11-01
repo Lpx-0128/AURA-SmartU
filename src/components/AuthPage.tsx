@@ -189,7 +189,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl mb-4">
               <GraduationCap className="text-white" size={32} />
             </div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Auri - SmartU</h1>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">AURA - SmartU</h1>
             <p className="text-slate-600">Your intelligent university companion</p>
           </div>
 
