@@ -18,8 +18,8 @@ interface TrafficRoute {
 
 interface University {
   name?: string;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
 }
 
 export function TrafficStatusPage() {
@@ -139,8 +139,13 @@ export function TrafficStatusPage() {
       return;
     }
 
-    const origin = `${userUniversity.latitude},${userUniversity.longitude}`;
-    const destination = `${route.destination_latitude},${route.destination_longitude}`;
+    const originLat = typeof userUniversity.latitude === 'string' ? parseFloat(userUniversity.latitude) : userUniversity.latitude;
+    const originLng = typeof userUniversity.longitude === 'string' ? parseFloat(userUniversity.longitude) : userUniversity.longitude;
+    const destLat = typeof route.destination_latitude === 'string' ? parseFloat(route.destination_latitude) : route.destination_latitude;
+    const destLng = typeof route.destination_longitude === 'string' ? parseFloat(route.destination_longitude) : route.destination_longitude;
+
+    const origin = `${originLat},${originLng}`;
+    const destination = `${destLat},${destLng}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 
     window.open(mapsUrl, '_blank');
