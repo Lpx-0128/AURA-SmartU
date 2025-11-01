@@ -99,13 +99,12 @@ export function TrafficStatusPage() {
       return;
     }
 
-    let origin = '';
-    if (userUniversity?.latitude && userUniversity?.longitude) {
-      origin = `${userUniversity.latitude},${userUniversity.longitude}`;
-    } else {
-      origin = route.from_location;
+    if (!userUniversity?.latitude || !userUniversity?.longitude) {
+      alert('University location not available');
+      return;
     }
 
+    const origin = `${userUniversity.latitude},${userUniversity.longitude}`;
     const destination = `${route.destination_latitude},${route.destination_longitude}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 
