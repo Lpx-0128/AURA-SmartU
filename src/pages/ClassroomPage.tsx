@@ -26,28 +26,25 @@ export function ClassroomPage() {
   const fetchClassrooms = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('university_id')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!profile?.university_id) {
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
+    let query = supabase
       .from('classrooms')
       .select('*')
-      .eq('university_id', profile.university_id)
       .order('building', { ascending: true })
-      .order('name', { ascending: true });
+      .order('room_number', { ascending: true });
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('university_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.university_id) {
+        query = query.eq('university_id', profile.university_id);
+      }
+    }
+
+    const { data, error } = await query;
 
     if (data) {
       setClassrooms(data);
@@ -69,7 +66,7 @@ export function ClassroomPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (room) =>
-          room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          room.room_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
           room.building.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -185,7 +182,7 @@ export function ClassroomPage() {
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
                       <MapPin className="text-blue-600" size={18} />
-                      <h3 className="font-bold text-slate-800">{room.name}</h3>
+                      <h3 className="font-bold text-slate-800">{room.room_number}</h3>
                     </div>
                     <p className="text-sm text-slate-600">{room.building}</p>
                   </div>
