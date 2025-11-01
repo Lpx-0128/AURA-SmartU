@@ -8,9 +8,11 @@ import monashLogo from '../assets/monash-logo-v2.png';
 import sunwayLogo from '../assets/sunway-logo.jpg';
 
 const universityLogos: Record<string, string> = {
+  'TAYLOR': taylorsLogo,
   'TAYLORS': taylorsLogo,
   'MONASH': monashLogo,
   'SUNWAY': sunwayLogo,
+  'DEMO': taylorsLogo,
 };
 
 export function Dashboard() {

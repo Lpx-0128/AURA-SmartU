@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { GraduationCap, Mail, Phone, Building2, User, Lock, AlertCircle, Key } from 'lucide-react';
+import taylorLogo from '../assets/unnamed.png';
+import sunwayLogo from '../assets/sunway-logo.jpg';
+import monashLogo from '../assets/monash-logo-v2.png';
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -165,8 +168,20 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6TTI0IDM0YzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6bTAtMTBjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-center opacity-10">
+        <div className="grid grid-cols-3 gap-8 p-8">
+          <img src={taylorLogo} alt="Taylor University" className="w-48 h-48 object-contain" />
+          <img src={sunwayLogo} alt="Sunway University" className="w-48 h-48 object-contain" />
+          <img src={monashLogo} alt="Monash University" className="w-48 h-48 object-contain" />
+          <img src={monashLogo} alt="Monash University" className="w-48 h-48 object-contain" />
+          <img src={taylorLogo} alt="Taylor University" className="w-48 h-48 object-contain" />
+          <img src={sunwayLogo} alt="Sunway University" className="w-48 h-48 object-contain" />
+          <img src={sunwayLogo} alt="Sunway University" className="w-48 h-48 object-contain" />
+          <img src={monashLogo} alt="Monash University" className="w-48 h-48 object-contain" />
+          <img src={taylorLogo} alt="Taylor University" className="w-48 h-48 object-contain" />
+        </div>
+      </div>
 
       <div className="w-full max-w-md relative">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
