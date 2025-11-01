@@ -5,20 +5,15 @@ import { ArrowLeft, Search, Users, Clock, TrendingUp, TrendingDown, Minus, MapPi
 
 interface Lift {
   id: string;
+  name: string;
   building: string;
-  lift_id: string;
   current_floor: number;
-  direction: string;
   queue_count: number;
-  current_occupancy: number;
-  capacity: number;
-  estimated_wait_time: number;
 }
 
 interface Classroom {
+  name: string;
   building: string;
-  floor: number;
-  room_number: string;
 }
 
 export function LiftTrackerPage() {
@@ -42,7 +37,7 @@ export function LiftTrackerPage() {
     if (destination.trim()) {
       const filtered = classrooms.filter(
         (room) =>
-          room.room_number.toLowerCase().includes(destination.toLowerCase()) ||
+          room.name.toLowerCase().includes(destination.toLowerCase()) ||
           room.building.toLowerCase().includes(destination.toLowerCase())
       );
       setSearchResults(filtered.slice(0, 5));
@@ -77,7 +72,7 @@ export function LiftTrackerPage() {
 
     const [liftsData, classroomsData] = await Promise.all([
       supabase.from('lifts').select('*').eq('university_id', profile.university_id).order('building', { ascending: true }),
-      supabase.from('classrooms').select('building, floor, room_number').eq('university_id', profile.university_id).order('building', { ascending: true }),
+      supabase.from('classrooms').select('name, building').eq('university_id', profile.university_id).order('building', { ascending: true }),
     ]);
 
     if (liftsData.data) setLifts(liftsData.data);
@@ -85,7 +80,7 @@ export function LiftTrackerPage() {
     setLoading(false);
   };
 
-  const calculateLiftScore = (lift: Lift, targetFloor: number, targetBuilding: string, currentFloor: number) => {
+  const calculateLiftScore = (lift: Lift, targetBuilding: string, currentFloor: number) => {
     let score = 100;
     let reasoning = [];
 
@@ -100,17 +95,6 @@ export function LiftTrackerPage() {
     score -= floorDistance * 5;
     reasoning.push(`${floorDistance} floors away`);
 
-    const occupancyRate = (lift.current_occupancy / lift.capacity) * 100;
-    if (occupancyRate > 80) {
-      score -= 30;
-      reasoning.push('Nearly full');
-    } else if (occupancyRate > 50) {
-      score -= 15;
-      reasoning.push('Moderately occupied');
-    } else {
-      reasoning.push('Good space available');
-    }
-
     if (lift.queue_count > 5) {
       score -= lift.queue_count * 3;
       reasoning.push(`${lift.queue_count} people waiting`);
@@ -121,31 +105,12 @@ export function LiftTrackerPage() {
       reasoning.push('No queue');
     }
 
-    const isGoingTowardsYou =
-      (lift.direction === 'up' && lift.current_floor < currentFloor) ||
-      (lift.direction === 'down' && lift.current_floor > currentFloor);
-
-    const isGoingYourDirection =
-      (lift.direction === 'up' && targetFloor > currentFloor) ||
-      (lift.direction === 'down' && targetFloor < currentFloor);
-
-    if (lift.direction === 'idle') {
-      score += 15;
-      reasoning.push('Idle and ready');
-    } else if (isGoingTowardsYou && isGoingYourDirection) {
-      score += 20;
-      reasoning.push('Coming your way');
-    } else if (!isGoingYourDirection) {
-      score -= 10;
-      reasoning.push('Wrong direction');
-    }
-
     return { score: Math.max(0, score), reasoning: reasoning.join(', ') };
   };
 
   const updateRecommendations = (room: Classroom, floor: number) => {
     const scoredLifts = lifts.map((lift) => {
-      const { score, reasoning } = calculateLiftScore(lift, room.floor, room.building, floor);
+      const { score, reasoning } = calculateLiftScore(lift, room.building, floor);
       return { ...lift, score, reasoning };
     });
 
@@ -160,16 +125,9 @@ export function LiftTrackerPage() {
     updateRecommendations(room, currentFloor);
   };
 
-  const getDirectionIcon = (direction: string) => {
-    if (direction === 'up') return <TrendingUp className="text-green-600" size={20} />;
-    if (direction === 'down') return <TrendingDown className="text-blue-600" size={20} />;
-    return <Minus className="text-slate-400" size={20} />;
-  };
-
-  const getOccupancyColor = (occupancy: number, capacity: number) => {
-    const rate = (occupancy / capacity) * 100;
-    if (rate > 80) return 'text-red-600';
-    if (rate > 50) return 'text-orange-600';
+  const getQueueColor = (count: number) => {
+    if (count > 5) return 'text-red-600';
+    if (count > 2) return 'text-orange-600';
     return 'text-green-600';
   };
 
@@ -240,10 +198,10 @@ export function LiftTrackerPage() {
                           <MapPin className="text-teal-600" size={20} />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-800">{room.room_number}</div>
+                          <div className="font-bold text-slate-800">{room.name}</div>
                           <div className="text-sm text-slate-600 flex items-center space-x-2">
                             <Building2 size={14} />
-                            <span>{room.building} · Floor {room.floor}</span>
+                            <span>{room.building}</span>
                           </div>
                         </div>
                       </div>
@@ -290,7 +248,7 @@ export function LiftTrackerPage() {
                 <div>
                   <h2 className="text-2xl font-bold mb-1">Recommended Lifts</h2>
                   <p className="text-teal-100">
-                    Going to <span className="font-semibold">{selectedDestination.room_number}</span> · Floor {selectedDestination.floor} · {selectedDestination.building}
+                    Going to <span className="font-semibold">{selectedDestination.name}</span> · {selectedDestination.building}
                   </p>
                 </div>
                 <div className="text-right">
@@ -319,9 +277,8 @@ export function LiftTrackerPage() {
                       )}
 
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-2xl font-bold">{lift.lift_id}</h3>
+                        <h3 className="text-2xl font-bold">{lift.name}</h3>
                         <div className="flex items-center space-x-2">
-                          {getDirectionIcon(lift.direction)}
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${badge.color} text-white`}>
                             {badge.text}
                           </span>
@@ -337,26 +294,11 @@ export function LiftTrackerPage() {
                         <div className="flex justify-between items-center text-sm">
                           <span className="font-medium flex items-center space-x-1">
                             <Users size={14} />
-                            <span>Occupancy</span>
+                            <span>Queue</span>
                           </span>
-                          <span className={`font-bold ${getOccupancyColor(lift.current_occupancy, lift.capacity)}`}>
-                            {lift.current_occupancy}/{lift.capacity}
+                          <span className={`font-bold ${getQueueColor(lift.queue_count)}`}>
+                            {lift.queue_count === 0 ? 'Empty' : `${lift.queue_count} waiting`}
                           </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="font-medium">Queue Length</span>
-                          <span className="font-bold">
-                            {lift.queue_count === 0 ? 'None' : `${lift.queue_count} waiting`}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="font-medium flex items-center space-x-1">
-                            <Clock size={14} />
-                            <span>Est. Wait</span>
-                          </span>
-                          <span className="font-bold">{lift.estimated_wait_time}s</span>
                         </div>
                       </div>
 
@@ -407,37 +349,23 @@ export function LiftTrackerPage() {
                   {buildingLifts.map((lift) => (
                     <div key={lift.id} className="bg-white rounded-xl p-4 border-2 border-slate-200 hover:border-teal-300 transition-all hover:shadow-md">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold text-slate-800 text-lg">{lift.lift_id}</h4>
-                        {getDirectionIcon(lift.direction)}
+                        <h4 className="font-bold text-slate-800 text-lg">{lift.name}</h4>
                       </div>
 
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Floor</span>
-                          <span className="font-bold text-slate-800">{lift.current_floor}</span>
+                          <span className="text-slate-600">Current Floor</span>
+                          <span className="font-bold text-slate-800">Floor {lift.current_floor}</span>
                         </div>
 
                         <div className="flex items-center justify-between">
                           <span className="text-slate-600 flex items-center space-x-1">
                             <Users size={14} />
-                            <span>Inside</span>
+                            <span>Queue</span>
                           </span>
-                          <span className={`font-bold ${getOccupancyColor(lift.current_occupancy, lift.capacity)}`}>
-                            {lift.current_occupancy}/{lift.capacity}
+                          <span className={`font-bold ${getQueueColor(lift.queue_count)}`}>
+                            {lift.queue_count === 0 ? 'Empty' : lift.queue_count}
                           </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Queue</span>
-                          <span className="font-bold text-slate-800">{lift.queue_count}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600 flex items-center space-x-1">
-                            <Clock size={14} />
-                            <span>Wait</span>
-                          </span>
-                          <span className="font-bold text-slate-800">{lift.estimated_wait_time}s</span>
                         </div>
                       </div>
                     </div>
