@@ -5,10 +5,12 @@ import { VoiceAssistant } from './VoiceAssistant';
 import { useState, useEffect } from 'react';
 import taylorsLogo from '../assets/unnamed.png';
 import monashLogo from '../assets/monash-logo-v2.png';
+import sunwayLogo from '../assets/sunway-logo.jpg';
 
 const universityLogos: Record<string, string> = {
   'TAYLORS': taylorsLogo,
   'MONASH': monashLogo,
+  'SUNWAY': sunwayLogo,
 };
 
 export function Dashboard() {
