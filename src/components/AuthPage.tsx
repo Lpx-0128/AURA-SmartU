@@ -68,11 +68,12 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
         if (newSignInError) throw newSignInError;
 
-        const taylorsUni = universities.find(u => u.code === 'TAYLORS');
+        const taylorUni = universities.find(u => u.code === 'TAYLOR');
         await supabase.from('user_profiles').upsert({
           id: newUser!.id,
           name: 'Admin User',
-          university_id: taylorsUni?.id || null,
+          university: taylorUni?.name || '',
+          university_id: taylorUni?.id || null,
           email: 'admin@campus.demo',
           phone_number: '+60123456789',
         });
@@ -84,11 +85,12 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
           .maybeSingle();
 
         if (!existingProfile) {
-          const taylorsUni = universities.find(u => u.code === 'TAYLORS');
+          const taylorUni = universities.find(u => u.code === 'TAYLOR');
           await supabase.from('user_profiles').insert({
             id: user!.id,
             name: 'Admin User',
-            university_id: taylorsUni?.id || null,
+            university: taylorUni?.name || '',
+            university_id: taylorUni?.id || null,
             email: 'admin@campus.demo',
             phone_number: '+60123456789',
           });
@@ -133,23 +135,25 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         throw new Error('All fields are required');
       }
 
+      const selectedUniversity = universities.find(u => u.id === signupData.university_id);
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
+        options: {
+          data: {
+            name: signupData.name,
+            university: selectedUniversity?.name || '',
+            university_id: signupData.university_id,
+            phone_number: signupData.phone,
+          }
+        }
       });
 
       if (signUpError) throw signUpError;
 
       if (authData.user) {
-        const { error: profileError } = await supabase.from('user_profiles').insert({
-          id: authData.user.id,
-          name: signupData.name,
-          university_id: signupData.university_id,
-          email: signupData.email,
-          phone_number: signupData.phone,
-        });
-
-        if (profileError) throw profileError;
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: signupData.email,
@@ -157,6 +161,19 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         });
 
         if (signInError) throw signInError;
+
+        const { error: profileError } = await supabase.from('user_profiles').upsert({
+          id: authData.user.id,
+          name: signupData.name,
+          university: selectedUniversity?.name || '',
+          university_id: signupData.university_id,
+          email: signupData.email,
+          phone_number: signupData.phone,
+        }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
 
         onAuthSuccess();
       }
