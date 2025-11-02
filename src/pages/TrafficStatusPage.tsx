@@ -11,7 +11,6 @@ interface POI {
   longitude: number;
   is_default: boolean;
   created_at: string;
-  estimated_grab_fee?: number;
 }
 
 interface POITraffic {
@@ -20,6 +19,7 @@ interface POITraffic {
   commute_time_minutes: number;
   traffic_level: 'low' | 'moderate' | 'heavy' | 'severe';
   last_updated: string;
+  estimated_grab_fee?: number;
 }
 
 interface CombinedPOIData extends POI {
@@ -89,6 +89,7 @@ export function TrafficStatusPage() {
               commute_time_minutes: traffic?.commute_time_minutes,
               traffic_level: traffic?.traffic_level,
               last_updated: traffic?.last_updated,
+              estimated_grab_fee: traffic?.estimated_grab_fee,
             };
           });
           setPois(combined);
