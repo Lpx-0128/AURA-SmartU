@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { UserCircle2, School, ArrowUpDown, Car, ParkingSquare, BookOpen, Utensils, CalendarDays, Phone } from 'lucide-react';
+import { UserCircle2, School, ArrowUpDown, Car, ParkingSquare, BookOpen, Utensils, CalendarDays, Phone, Clock, AlertTriangle, Zap } from 'lucide-react';
 import { VoiceAssistant } from './VoiceAssistant';
 import { useState, useEffect } from 'react';
 import taylorsLogo from '../assets/taylors-logo-01.jpg';
@@ -15,12 +15,28 @@ const universityLogos: Record<string, string> = {
   'DEMO': taylorsLogo,
 };
 
+interface Alert {
+  message: string;
+  severity: 'high' | 'medium' | 'low';
+  icon: 'traffic' | 'lift' | 'parking' | 'general';
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const [universityCode, setUniversityCode] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentAlert, setCurrentAlert] = useState<Alert | null>(null);
 
   useEffect(() => {
     fetchUserUniversity();
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now);
+      updateAlert(now);
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const fetchUserUniversity = async () => {
@@ -43,6 +59,82 @@ export function Dashboard() {
       if (university) {
         setUniversityCode(university.code);
       }
+    }
+  };
+
+  const updateAlert = (now: Date) => {
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const day = now.getDay();
+
+    const isWeekday = day >= 1 && day <= 5;
+
+    if (isWeekday && hour >= 7 && hour < 9) {
+      setCurrentAlert({
+        message: 'Heavy traffic expected to Sunway Pyramid in 30 mins',
+        severity: 'high',
+        icon: 'traffic'
+      });
+    } else if (isWeekday && hour >= 12 && hour < 14) {
+      setCurrentAlert({
+        message: 'Peak lunch hour - Long canteen queues expected',
+        severity: 'medium',
+        icon: 'general'
+      });
+    } else if (isWeekday && hour >= 17 && hour < 19) {
+      setCurrentAlert({
+        message: 'Evening rush - Severe traffic to KLCC & Mid Valley',
+        severity: 'high',
+        icon: 'traffic'
+      });
+    } else if (isWeekday && ((hour === 8 && minute >= 45) || (hour === 9 && minute < 15))) {
+      setCurrentAlert({
+        message: 'Lift congestion at main buildings - Expect 5+ min wait',
+        severity: 'high',
+        icon: 'lift'
+      });
+    } else if (isWeekday && hour >= 9 && hour < 17) {
+      setCurrentAlert({
+        message: 'Limited parking in Zone A - Try Zone B or C',
+        severity: 'medium',
+        icon: 'parking'
+      });
+    } else if (!isWeekday) {
+      setCurrentAlert({
+        message: 'Weekend - Most facilities operating at reduced hours',
+        severity: 'low',
+        icon: 'general'
+      });
+    } else {
+      setCurrentAlert({
+        message: 'All systems operating normally',
+        severity: 'low',
+        icon: 'general'
+      });
+    }
+  };
+
+  const getAlertColor = (severity: string) => {
+    switch(severity) {
+      case 'high':
+        return 'bg-red-50 border-red-300 text-red-800';
+      case 'medium':
+        return 'bg-yellow-50 border-yellow-300 text-yellow-800';
+      default:
+        return 'bg-green-50 border-green-300 text-green-800';
+    }
+  };
+
+  const getAlertIcon = (icon: string) => {
+    switch(icon) {
+      case 'traffic':
+        return <Car size={18} />;
+      case 'lift':
+        return <ArrowUpDown size={18} />;
+      case 'parking':
+        return <ParkingSquare size={18} />;
+      default:
+        return <Zap size={18} />;
     }
   };
 
@@ -71,6 +163,12 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-slate-100 rounded-lg border border-slate-200">
+                <Clock className="text-blue-600" size={20} />
+                <span className="text-sm font-semibold text-slate-800">
+                  {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                </span>
+              </div>
               <button
                 onClick={() => navigate('/account')}
                 className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg"
@@ -85,6 +183,22 @@ export function Dashboard() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="space-y-8">
+          {currentAlert && (
+            <div className={`rounded-xl border-2 p-4 ${getAlertColor(currentAlert.severity)} shadow-md animate-fade-in`}>
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  {currentAlert.severity === 'high' ? <AlertTriangle size={24} /> : getAlertIcon(currentAlert.icon)}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{currentAlert.message}</p>
+                </div>
+                <div className="text-xs font-medium opacity-75">
+                  {currentAlert.severity.toUpperCase()}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <h2 className="text-3xl font-bold text-slate-800 mb-2">Campus Overview</h2>
             <p className="text-slate-600">Quick access to campus facilities</p>
