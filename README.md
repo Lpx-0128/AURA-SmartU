@@ -1,7 +1,7 @@
 # 🎓 Aura-SmartU — AI-Powered Campus Assistant
 
 ## 🧠 Overview
-**Aura-SmartU** is an AI-driven web/mobile application designed to enhance the daily experience of university students.  
+**AURA-SmartU** is an AI-driven web/mobile application designed to enhance the daily experience of university students.  
 From finding an available classroom or lift, to checking library seat status or estimating driving time to the well-known places at surrounding(ex:Sunway Pyramid). — Aura-SmartU integrates multiple intelligent services into one unified platform.
 
 Our goal is to make campus life **smarter, simpler, and more efficient** through AI and data-driven insights.
@@ -33,13 +33,13 @@ Our goal is to make campus life **smarter, simpler, and more efficient** through
 
 | Category | Technology |
 |-----------|-------------|
-| **Frontend** | React (Web) / Flutter (Mobile) |
-| **Backend** | Node.js / Express / FastAPI |
+| **Frontend** | React / Flutter / React Router DOM / Vite / Tailwind CSS / Lucide React|
+| **Backend** | PostgreSQL database|
 | **Database** | Superbase |
-| **AI & ML** | Python (scikit-learn, TensorFlow), OpenAI API |
+| **AI & ML** | OpenAI API |
 | **Maps & Sensors** | Google Maps API / IoT Integration |
-| **Voice Interface** | SpeechRecognition API / GPT-based Chatbot |
-| **UI Design** | Figma / Adobe XD |
+| **Voice Interface** | GPT-based Chatbot |
+| **UI Design** | No formal prototyping tool was used |
 
 ---
 
@@ -51,7 +51,6 @@ Our goal is to make campus life **smarter, simpler, and more efficient** through
 ---
 
 ## 🎨 UI/UX Prototype
-- Designed in **Figma** for intuitive navigation and minimal learning curve.
 - Emphasizes **youthful colors**, **soft contrast**, and **clean typography**.
 - Focus areas:
   - Quick access dashboard (real-time data)
@@ -71,13 +70,12 @@ Our goal is to make campus life **smarter, simpler, and more efficient** through
 ## 🧑‍💻 Contributors
 | Name | Role | Responsibilities |
 |------|------|------------------|
-| [Lee Ping Xian] | Project Lead / Developer | Backend, AI Integration |
-| [Leong Wui Yip] | UI/UX Designer | Prototype Design |
+| [Lee Ping Xian] | Project Lead / Developer | Backend | Database |
+| [Leong Wui Yip] | UI/UX Designer | Prototype Design | Prompt engineer |
 
 ---
 
 ## 🔮 Future Enhancements
-- Integrate **predictive congestion models** using historical traffic data.  
 - Add **cross-campus shuttle tracking** and **real-time notifications**.  
 - Deploy **multi-language voice assistant** for international students.  
 - Connect to university's **official timetable and facility systems**.
@@ -87,7 +85,7 @@ Our goal is to make campus life **smarter, simpler, and more efficient** through
 ## ⚙️ Installation (for Developers)
 ```bash
 # Clone the repository
-git clone https://github.com/SWEATChamp/Auri-SmartU.git
+git clone https://github.com/Lpx-0128/AURA-SmartU.git
 cd AURA-SmartU
 
 # Install dependencies
