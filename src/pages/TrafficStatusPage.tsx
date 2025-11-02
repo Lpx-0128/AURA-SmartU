@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, MapPin, Clock, Navigation, TrendingUp, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Navigation, TrendingUp, AlertTriangle, RefreshCw, DollarSign } from 'lucide-react';
 
 interface POI {
   id: string;
@@ -11,6 +11,7 @@ interface POI {
   longitude: number;
   is_default: boolean;
   created_at: string;
+  estimated_grab_fee?: number;
 }
 
 interface POITraffic {
@@ -25,6 +26,7 @@ interface CombinedPOIData extends POI {
   commute_time_minutes?: number;
   traffic_level?: 'low' | 'moderate' | 'heavy' | 'severe';
   last_updated?: string;
+  estimated_grab_fee?: number;
 }
 
 interface University {
@@ -289,8 +291,15 @@ export function TrafficStatusPage() {
                       <Navigation className="text-blue-600" size={20} />
                     </div>
                   </div>
-                  <div className="mt-2 ml-14 text-sm text-slate-600">
-                    {poi.address}
+                  <div className="mt-2 ml-14 flex items-center justify-between">
+                    <div className="text-sm text-slate-600">{poi.address}</div>
+                    {poi.estimated_grab_fee && (
+                      <div className="flex items-center space-x-2 bg-white/80 px-3 py-1 rounded-lg border border-slate-200">
+                        <DollarSign className="text-green-600" size={16} />
+                        <span className="text-sm font-semibold text-slate-800">RM {poi.estimated_grab_fee.toFixed(2)}</span>
+                        <span className="text-xs text-slate-500">Grab</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
