@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { UserCircle2, School, ArrowUpDown, Car, ParkingSquare, BookOpen, Utensils, CalendarDays, Phone, Clock, AlertTriangle, Zap } from 'lucide-react';
+import { UserCircle2, School, ArrowUpDown, Car, ParkingSquare, BookOpen, Utensils, CalendarDays, Phone, Clock, AlertTriangle, Zap, TrendingUp } from 'lucide-react';
 import { VoiceAssistant } from './VoiceAssistant';
 import { useState, useEffect } from 'react';
+import { predictNextHour, Prediction } from '../services/predictionService';
 import taylorsLogo from '../assets/taylors-logo-01.jpg';
 import monashLogo from '../assets/monash-logo-v2 copy copy.png';
 import sunwayLogo from '../assets/Sunway_logo.jpg';
@@ -26,9 +27,12 @@ export function Dashboard() {
   const [universityCode, setUniversityCode] = useState<string>('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentAlert, setCurrentAlert] = useState<Alert | null>(null);
+  const [aiPrediction, setAiPrediction] = useState<Prediction | null>(null);
+  const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
 
   useEffect(() => {
     fetchUserUniversity();
+    loadAIPrediction();
 
     const timer = setInterval(() => {
       const now = getCurrentTime();
@@ -36,7 +40,14 @@ export function Dashboard() {
       updateAlert(now);
     }, 1000);
 
-    return () => clearInterval(timer);
+    const predictionTimer = setInterval(() => {
+      loadAIPrediction();
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(predictionTimer);
+    };
   }, []);
 
   const getCurrentTime = (): Date => {
@@ -55,6 +66,18 @@ export function Dashboard() {
     }
 
     return now;
+  };
+
+  const loadAIPrediction = async () => {
+    setIsLoadingPrediction(true);
+    try {
+      const prediction = await predictNextHour();
+      setAiPrediction(prediction);
+    } catch (error) {
+      console.error('Failed to load AI prediction:', error);
+    } finally {
+      setIsLoadingPrediction(false);
+    }
   };
 
   const fetchUserUniversity = async () => {
@@ -201,6 +224,48 @@ export function Dashboard() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="space-y-8">
+          {aiPrediction && (
+            <div className={`rounded-xl border-2 p-4 ${getAlertColor(aiPrediction.severity)} shadow-lg animate-fade-in relative overflow-hidden`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rounded-bl-full"></div>
+              <div className="relative">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white shadow-md">
+                      <TrendingUp size={20} />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <span className="text-xs font-bold uppercase tracking-wider opacity-75">
+                        AI Prediction - Next Hour
+                      </span>
+                      {!isLoadingPrediction && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/30 font-medium">
+                          {Math.round(aiPrediction.confidence * 100)}% confidence
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-semibold text-base leading-tight">{aiPrediction.message}</p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {aiPrediction.severity === 'high' ? <AlertTriangle size={24} /> : getAlertIcon(aiPrediction.icon)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isLoadingPrediction && !aiPrediction && (
+            <div className="rounded-xl border-2 p-4 bg-slate-50 border-slate-200 shadow-md animate-pulse">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-200"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentAlert && (
             <div className={`rounded-xl border-2 p-4 ${getAlertColor(currentAlert.severity)} shadow-md animate-fade-in`}>
               <div className="flex items-center space-x-3">
